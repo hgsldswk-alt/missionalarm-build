@@ -1,0 +1,4 @@
+"CFBundleDisplayName" = "Mission Alarm";
+"NSAlarmKitUsageDescription" = "Ring your alarms at the times you choose, including in Silent Mode and Focus.";
+"NSMotionUsageDescription" = "Count steps and shakes for the wake-up mission.";
+"NSCameraUsageDescription" = "Register and scan the QR code or barcode you choose for your wake-up mission.";

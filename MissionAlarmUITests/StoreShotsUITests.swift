@@ -1,0 +1,139 @@
+import CryptoKit
+import XCTest
+
+final class StoreShotsUITests: XCTestCase {
+    private struct Language {
+        let code: String
+        let locale: String
+        let home: String
+        let editor: String
+        let settings: String
+        let pro: String
+        let mission: String
+        let wake: String
+        let share: String
+    }
+
+    override func setUp() {
+        super.setUp()
+        continueAfterFailure = false
+    }
+
+    func testEnglishStoreScreenshots() {
+        capture(Language(code: "en", locale: "en_US", home: "All Alarms",
+                             editor: "New Alarm", settings: "Settings", pro: "Pro",
+                             mission: "Finish the mission to stop", wake: "You’re Up", share: "Share Wake-up Card"))
+    }
+
+    func testSimplifiedChineseStoreScreenshots() {
+        capture(Language(code: "zh-Hans", locale: "zh_CN", home: "全部闹钟",
+                             editor: "新建闹钟", settings: "设置", pro: "高级版",
+                             mission: "做完任务才会停", wake: "起床成功", share: "分享早起卡"))
+    }
+
+    func testTraditionalChineseStoreScreenshots() {
+        capture(Language(code: "zh-Hant", locale: "zh_TW", home: "所有鬧鐘",
+                             editor: "新增鬧鐘", settings: "設定", pro: "進階版",
+                             mission: "做完任務才會停", wake: "起床成功", share: "分享早起卡"))
+    }
+
+    private func capture(_ language: Language) {
+        let app = XCUIApplication()
+        let launchArguments = ["-store-screenshots", "-AppleLanguages", "(\(language.code))",
+                               "-AppleLocale", language.locale]
+        app.launchArguments = launchArguments
+        app.launch()
+
+        let alarmRows = app.buttons.matching(identifier: "alarmRow")
+        shows(app.staticTexts[language.home])
+        XCTAssertEqual(alarmRows.count, 2)
+        shot(app, language, "1-home")
+
+        tap(app.buttons["addAlarm"])
+        shows(app.staticTexts[language.editor])
+        shows(app.buttons["saveAlarm"])
+        shot(app, language, "2-editor")
+        tap(app.buttons["saveAlarm"])
+        shows(app.staticTexts[language.home])
+        XCTAssertEqual(alarmRows.count, 3)
+
+        tap(app.buttons["openSettings"])
+        shows(app.staticTexts[language.settings])
+        shot(app, language, "5-settings")
+        tap(app.buttons["openPro"])
+        shows(app.staticTexts[language.pro])
+        shows(app.buttons["restorePurchases"])
+        if language.code == "en" {
+            shows(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "$4.99")).firstMatch)
+            shows(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "$0.00")).firstMatch)
+        }
+        shot(app, language, "6-paywall")
+
+        app.terminate()
+        app.launchArguments = launchArguments + ["-store-mission"]
+        app.launch()
+        shows(app.staticTexts[language.mission])
+        shows(app.staticTexts["mathQuestion"])
+        shot(app, language, "3-math")
+
+        for (expression, answer) in [("24 + 18", "42"), ("36 − 15", "21"), ("27 + 16", "43")] {
+            let question = app.staticTexts.matching(identifier: "mathQuestion")
+                .matching(NSPredicate(format: "label == %@", expression)).firstMatch
+            shows(question)
+            for digit in answer { tap(app.buttons[String(digit)]) }
+            tap(app.buttons["submitAnswer"])
+        }
+        shows(app.staticTexts[language.wake])
+        shows(app.buttons[language.share])
+        shot(app, language, "4-wake")
+    }
+
+    private func shows(_ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
+        dismissSystemAlerts()
+        if !element.waitForExistence(timeout: 4) { dismissSystemAlerts() }
+        XCTAssertTrue(element.waitForExistence(timeout: 8), element.debugDescription, file: file, line: line)
+    }
+
+    private func dismissSystemAlerts() {
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        for _ in 0..<3 {
+            let alert = springboard.alerts.firstMatch
+            guard alert.waitForExistence(timeout: 1) else { return }
+            let count = alert.buttons.count
+            guard count > 0 else { return }
+            alert.buttons.element(boundBy: count - 1).tap()
+        }
+    }
+
+    private func tap(_ button: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
+        shows(button, file: file, line: line)
+        XCTAssertTrue(button.isHittable, button.debugDescription, file: file, line: line)
+        button.tap()
+    }
+
+    private func shot(_ app: XCUIApplication, _ language: Language, _ name: String) {
+        dismissSystemAlerts()
+        app.activate()
+        let png = app.screenshot().pngRepresentation
+        let filename = "store-\(language.code)-\(name)"
+        let attachment = XCTAttachment(data: png, uniformTypeIdentifier: "public.png")
+        attachment.name = filename
+        attachment.lifetime = .keepAlways
+        add(attachment)
+
+        let digest = SHA256.hash(data: png).map { String(format: "%02x", $0) }.joined()
+        print("STORE_SCREENSHOT \(filename) \(digest)")
+
+        let environment = ProcessInfo.processInfo.environment
+        guard let path = environment["SHOTS_DIR"] ?? environment["TEST_RUNNER_SHOTS_DIR"] else { return }
+        let directory = URL(fileURLWithPath: path, isDirectory: true)
+            .appendingPathComponent("shots", isDirectory: true)
+            .appendingPathComponent(language.code, isDirectory: true)
+        do {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            try png.write(to: directory.appendingPathComponent(name + ".png"))
+        } catch {
+            print("Screenshot is available in xcresult: \(filename) (\(error))")
+        }
+    }
+}

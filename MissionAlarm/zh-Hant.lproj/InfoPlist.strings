@@ -1,0 +1,4 @@
+"CFBundleDisplayName" = "任務鬧鐘";
+"NSAlarmKitUsageDescription" = "用來在你設定的時間響鈴叫你起床，靜音和專注模式下也會響。";
+"NSMotionUsageDescription" = "用來統計走路和搖手機起床任務的進度。";
+"NSCameraUsageDescription" = "用來登記和掃描你為起床任務選擇的 QR Code 或條碼。";

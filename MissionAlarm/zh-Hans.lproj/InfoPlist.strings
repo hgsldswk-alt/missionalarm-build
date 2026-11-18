@@ -1,0 +1,4 @@
+"CFBundleDisplayName" = "任务闹钟";
+"NSAlarmKitUsageDescription" = "用来在你设定的时间响铃叫你起床，静音和专注模式下也会响。";
+"NSMotionUsageDescription" = "用来统计走步和摇手机起床任务的进度。";
+"NSCameraUsageDescription" = "用来登记和扫描你为起床任务选择的二维码或条码。";
