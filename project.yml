@@ -1,0 +1,117 @@
+name: MissionAlarm
+options:
+  deploymentTarget:
+    iOS: "26.0"
+  developmentLanguage: zh-Hans
+  knownRegions: [zh-Hans, en, zh-Hant, ja]
+settings:
+  base:
+    APP_ID: com.hgsldswk.missionalarm
+    MARKETING_VERSION: "0.1"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.0"
+    CODE_SIGN_STYLE: Automatic
+    TARGETED_DEVICE_FAMILY: "1"
+targets:
+  MissionAlarm:
+    type: application
+    platform: iOS
+    sources:
+      - MissionAlarm
+      - Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_ID)
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+      configs:
+        Release:
+          CODE_SIGN_STYLE: Manual
+          CODE_SIGN_IDENTITY: Apple Distribution
+          PROVISIONING_PROFILE_SPECIFIER: MissionAlarm AppStore
+    info:
+      path: MissionAlarm/Info.plist
+      properties:
+        CFBundleDisplayName: 任务闹钟
+        CFBundleDevelopmentRegion: zh-Hans
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchScreen: {}
+        UIRequiresFullScreen: true
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        ITSAppUsesNonExemptEncryption: false
+        NSSupportsLiveActivities: true
+        NSAlarmKitUsageDescription: 用来在你设定的时间响铃叫你起床，静音和专注模式下也会响。
+        NSMotionUsageDescription: 用来统计走步和摇手机起床任务的进度。
+        NSCameraUsageDescription: 用来登记和扫描你为起床任务选择的二维码或条码。
+    dependencies:
+      - target: MissionAlarmWidget
+  MissionAlarmWidget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - MissionAlarmWidget
+      - Shared/WakeMeta.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_ID).widget
+        TARGETED_DEVICE_FAMILY: "1"
+        SKIP_INSTALL: YES
+        APPLICATION_EXTENSION_API_ONLY: YES
+      configs:
+        Release:
+          CODE_SIGN_STYLE: Manual
+          CODE_SIGN_IDENTITY: Apple Distribution
+          PROVISIONING_PROFILE_SPECIFIER: MissionAlarm Widget AppStore
+    info:
+      path: MissionAlarmWidget/Info.plist
+      properties:
+        CFBundleDisplayName: 任务闹钟
+        CFBundleDevelopmentRegion: zh-Hans
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+  MissionAlarmTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - MissionAlarmTests
+      - Shared/ChainPlan.swift
+      - Shared/AlarmRule.swift
+      - Shared/Mission.swift
+      - Shared/AlarmScheduler.swift
+      - Shared/Entitlement.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_ID).tests
+        GENERATE_INFOPLIST_FILE: YES
+  MissionAlarmUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - MissionAlarmUITests
+    dependencies:
+      - target: MissionAlarm
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_ID).uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: MissionAlarm
+schemes:
+  MissionAlarm:
+    build:
+      targets:
+        MissionAlarm: all
+        MissionAlarmTests: [test]
+    test:
+      config: Debug
+      targets: [MissionAlarmTests]
+  MissionAlarmUI:
+    build:
+      targets:
+        MissionAlarm: all
+        MissionAlarmUITests: [test]
+    test:
+      config: Debug
+      targets: [MissionAlarmUITests]
